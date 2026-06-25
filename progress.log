@@ -16,7 +16,7 @@ DONE | 08_sglang_radix_attention.md (PRIMARY) | 12000 words
 DONE | 09_sglang_architecture_and_internals.md (PRIMARY) | 12003 words
 DONE | 10_attention_kernels_and_hardware.md (PRIMARY) | 11997 words
 DONE | 11_performance_benchmarking_and_tuning.md (PRIMARY) | 11986 words
-TODO | 12_speculative_decoding.md
+DONE | 12_speculative_decoding.md | 4006 words
 TODO | 13_long_context_and_memory_optimization.md
 TODO | 14_multimodal_and_embedding_inference.md
 TODO | 15_advanced_features_and_research.md (PRIMARY)
