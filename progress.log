@@ -10,7 +10,7 @@ DONE | 02_transformer_inference_fundamentals.md (PRIMARY) | 12016 words
 DONE | 03_paged_attention_and_vllm_memory.md (PRIMARY) | 12000 words
 DONE | 04_vllm_scheduler.md (PRIMARY) | 12000 words
 DONE | 05_vllm_distributed_inference.md (PRIMARY) | 12007 words
-TODO | 06_vllm_model_support_and_quantization.md
+DONE | 06_vllm_model_support_and_quantization.md | 4034 words
 TODO | 07_vllm_serving_and_apis.md
 TODO | 08_sglang_radix_attention.md (PRIMARY)
 TODO | 09_sglang_architecture_and_internals.md (PRIMARY)
