@@ -197,3 +197,57 @@ The remaining files drill into each layer of the stack:
 - **Applications & ops:** File 14 (multimodal & embeddings), File 17 (framework comparison), File 18 (LoRA serving), File 19 (production operations), File 20 (business & ecosystem).
 
 Read the roofline section (§2) and the KV cache section (§4) of this file until they are second nature. Everything else is an elaboration of the tension they describe: a memory-bandwidth-bound, KV-cache-hungry, variable-length workload that must be scheduled to satisfy latency and throughput at once.
+
+---
+
+## 10. A Brief Timeline of LLM Inference Systems Research
+
+Understanding where the techniques came from clarifies why the engines are designed as they are.
+
+- **2017–2019 — Transformer and the first efficiency moves.** The Transformer (Vaswani et al. 2017) establishes the architecture. Shazeer's Multi-Query Attention (2019) is the first paper to treat the *KV cache* as the inference bottleneck — a remarkably early recognition of what would become the central resource.
+- **2022 — Batching and IO-aware kernels.** **Orca** (Yu et al., OSDI 2022) introduces *iteration-level scheduling* and *selective batching* — the conceptual seed of continuous batching. In parallel, **FlashAttention** (Dao et al.) makes attention IO-aware, removing the `O(n²)` HBM materialization that capped context length. These two ideas — schedule per-iteration, and never materialize the score matrix — are load-bearing for everything after.
+- **2023 — PagedAttention and the serving-systems explosion.** vLLM's **PagedAttention** (SOSP 2023) brings OS-style virtual memory to the KV cache, lifting memory utilization from <40% to >95% and roughly doubling throughput. The same year sees GQA (making large-model KV cache tractable), speculative decoding (Leviathan et al.), and a wave of quantization work (GPTQ, AWQ, SmoothQuant). FlashAttention-2 lands.
+- **2024 — Structured generation, disaggregation, and MoE at scale.** SGLang's **RadixAttention** generalizes prefix caching to a radix tree across sessions. **Chunked prefill** (Sarathi/Sarathi-Serve) and **prefill–decode disaggregation** (DistServe, Mooncake) attack head-of-line blocking. **XGrammar** makes constrained decoding near-free. **DeepSeek-V2/V3** ship MLA and EP128, proving low-rank KV and 128-way expert parallelism in production. FlashAttention-3 exploits Hopper. FP8 inference becomes mainstream.
+- **2025–2026 — Consolidation and hardware diversity.** Disaggregation moves toward production; FlashInfer becomes the default kernel library; AMD MI300X and the NVIDIA Blackwell generation broaden the hardware base; long context (128K+) becomes a baseline expectation rather than a feature. vLLM and SGLang both ship engine rearchitectures (vLLM's V1/EngineCore, SGLang's overlap scheduler) that move scheduling off the critical path.
+
+The throughline: each advance either (a) reduces bytes moved (FlashAttention, GQA, MLA, quantization), (b) increases achievable batch at fixed memory (PagedAttention, prefix caching), or (c) reorganizes *when* and *where* work happens to keep the hardware in its efficient regime (continuous batching, chunked prefill, disaggregation, speculative decoding). The roofline (§2) is the unifying frame for all three.
+
+---
+
+## 11. The Throughput–Latency Pareto Frontier
+
+The defining operational tension deserves its own treatment because every tuning decision (File 11) lives on this frontier.
+
+Consider sweeping the batch size on a fixed deployment:
+
+- **At small batch** (few concurrent requests): each request enjoys low **TPOT** (Time Per Output Token) because the decode step is short and the memory bandwidth is shared among few sequences. But **throughput** (tokens/sec/GPU) is poor — you are deep in the memory-bound regime, weights are re-read for almost no work, and most of the GPU's FLOP capacity is wasted.
+- **As batch grows:** throughput rises nearly linearly (the fixed weight-read cost is amortized across more sequences) while TPOT rises slowly at first — adding sequences is "free" in compute until you approach the ridge point. This is the sweet spot the scheduler chases.
+- **At large batch** (approaching KV-memory or ridge-point limits): throughput saturates (you become compute-bound, or you run out of KV cache and start preempting), and TPOT degrades sharply as each sequence now competes for bandwidth and compute. **TTFT** (Time To First Token) also suffers because new requests queue behind a saturated batch.
+
+The operator does not actually want to maximize throughput *or* minimize latency in isolation — they want to maximize **goodput**: the request rate served *while meeting latency SLOs* (e.g. P95 TTFT < 2 s and P99 TPOT < 100 ms). Goodput is the business-relevant metric because latency violations mean failed requests regardless of raw token throughput. Much of the sophistication in vLLM's and SGLang's schedulers (Files 04, 09) — chunked prefill, priority policies, preemption choices, disaggregation — exists to push the goodput frontier outward: to serve more requests per GPU without breaching the latency budget. File 11 makes this quantitative with latency-under-load curves and the tuning knobs that shift them.
+
+A useful intuition: training optimization is a *scalar* problem (maximize tokens/sec); inference optimization is a *constrained, multi-objective* problem (maximize goodput subject to latency SLOs under a stochastic, variable-length request stream). That difference is why inference serving is a genuine systems discipline and not merely "training, but forward-only."
+
+---
+
+## 12. The Anatomy of a Serving Engine
+
+To orient the reader before the deep dives, here is the component decomposition shared (with naming differences) by vLLM and SGLang. Every serious inference engine has these layers, and the rest of this database is organized around them.
+
+1. **API / frontend layer.** Accepts requests (OpenAI-compatible HTTP, or SGLang's program DSL), applies chat templates, tokenizes input, and streams output. Covered in File 07 (vLLM) and Files 08–09 (SGLang frontend and TokenizerManager).
+2. **Scheduler.** The brain: decides each iteration which requests run, admits new requests from a waiting queue, preempts or swaps under memory pressure, and balances prefill against decode (chunked prefill). This is where continuous batching lives. Files 04 (vLLM) and 09 (SGLang).
+3. **KV cache / memory manager.** Allocates and frees KV blocks, maintains block tables, implements copy-on-write and prefix caching/RadixAttention, and handles CPU swap. Files 03 (PagedAttention) and 08 (RadixAttention).
+4. **Model executor / runner.** Builds the packed batch (token IDs, positions, slot mappings, block tables), runs the forward pass, applies sampling, and returns tokens. Files 06 (vLLM) and 09 (SGLang).
+5. **Attention & compute kernels.** FlashAttention/FlashInfer/Triton attention, fused norm/activation/RoPE kernels, quantized matmuls, sampling kernels, CUDA graphs. File 10.
+6. **Distributed runtime.** Tensor/pipeline/expert/sequence parallelism, collective communication (NCCL/RCCL), multi-node coordination. File 05.
+7. **Observability & operations.** Metrics, health checks, autoscaling, graceful shutdown, multi-model and LoRA serving. Files 07, 18, 19.
+
+The request's journey — HTTP in, tokenize, schedule, allocate KV, forward pass through kernels (possibly across many GPUs), sample, detokenize, stream out, free KV — touches every layer. Holding this map in mind makes each subsequent file legible as a zoom-in on one box. The two protagonists differ most in layers 2–3 (SGLang's RadixAttention and program-aware scheduling vs vLLM's PagedAttention and broad scheduler policies) and in layer 1 (SGLang's frontend DSL has no vLLM equivalent), and they increasingly converge in layers 4–6 as both adopt each other's best ideas. Where they diverge and why is the recurring theme of Files 03–11 and the explicit subject of File 17's comparison.
+
+---
+
+## 13. How to Read This Database
+
+This is a reference, not a tutorial, but it rewards a deliberate path. A reader new to serving should start with this file (especially §§2 and 4), then File 02 for the architecture-as-cost-model lens, then File 03 (PagedAttention) and File 04 (the scheduler) to see how the two central resources — KV memory and GPU time — are managed. From there, the SGLang pair (Files 08–09), the kernels-and-hardware file (10), and the performance file (11) form the systems core. The remaining files are deep dives that can be read in any order as needs arise: distributed inference (05), quantization and model support (06), serving APIs (07), speculative decoding (12), long context (13), multimodal (14), research frontiers (15), hardware (16), framework comparison (17), LoRA (18), operations (19), and business/ecosystem (20). The README provides curated reading paths for specific goals.
+
+Throughout, the same small set of cost models recurs — the roofline, the KV-cache formula, the prefill/decode duality, the throughput–latency frontier. They are introduced here precisely because they are the load-bearing intuitions. An engineer who can apply them fluently will find that the engines' design choices, far from arbitrary, are nearly forced by the physics of memory bandwidth and the economics of GPU time.
