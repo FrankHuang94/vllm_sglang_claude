@@ -7,7 +7,7 @@ Target: >= 100,000 words total. Primary (⭐) files >= 12,000 words each.
 
 DONE | 01_overview_and_landscape.md | 4079 words
 DONE | 02_transformer_inference_fundamentals.md (PRIMARY) | 12016 words
-TODO | 03_paged_attention_and_vllm_memory.md (PRIMARY)
+DONE | 03_paged_attention_and_vllm_memory.md (PRIMARY) | 12000 words
 TODO | 04_vllm_scheduler.md (PRIMARY)
 TODO | 05_vllm_distributed_inference.md (PRIMARY)
 TODO | 06_vllm_model_support_and_quantization.md
