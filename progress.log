@@ -18,7 +18,7 @@ DONE | 10_attention_kernels_and_hardware.md (PRIMARY) | 11997 words
 DONE | 11_performance_benchmarking_and_tuning.md (PRIMARY) | 11986 words
 DONE | 12_speculative_decoding.md | 4006 words
 DONE | 13_long_context_and_memory_optimization.md | 4001 words
-TODO | 14_multimodal_and_embedding_inference.md
+DONE | 14_multimodal_and_embedding_inference.md | 4000 words
 TODO | 15_advanced_features_and_research.md (PRIMARY)
 TODO | 16_hardware_backends_and_deployment.md
 TODO | 17_model_serving_frameworks_comparison.md
