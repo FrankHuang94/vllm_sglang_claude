@@ -1,0 +1,28 @@
+# vLLM & SGLang Technical Knowledge Database — Build Progress
+
+Format: STATUS | file | approx_words | commit
+STATUS values: DONE, IN_PROGRESS, TODO
+
+Target: >= 100,000 words total. Primary (⭐) files >= 12,000 words each.
+
+DONE | 01_overview_and_landscape.md | ~3400 words
+TODO | 02_transformer_inference_fundamentals.md (PRIMARY)
+TODO | 03_paged_attention_and_vllm_memory.md (PRIMARY)
+TODO | 04_vllm_scheduler.md (PRIMARY)
+TODO | 05_vllm_distributed_inference.md (PRIMARY)
+TODO | 06_vllm_model_support_and_quantization.md
+TODO | 07_vllm_serving_and_apis.md
+TODO | 08_sglang_radix_attention.md (PRIMARY)
+TODO | 09_sglang_architecture_and_internals.md (PRIMARY)
+TODO | 10_attention_kernels_and_hardware.md (PRIMARY)
+TODO | 11_performance_benchmarking_and_tuning.md (PRIMARY)
+TODO | 12_speculative_decoding.md
+TODO | 13_long_context_and_memory_optimization.md
+TODO | 14_multimodal_and_embedding_inference.md
+TODO | 15_advanced_features_and_research.md (PRIMARY)
+TODO | 16_hardware_backends_and_deployment.md
+TODO | 17_model_serving_frameworks_comparison.md
+TODO | 18_lora_and_finetuned_model_serving.md
+TODO | 19_production_operations_and_reliability.md
+TODO | 20_business_market_and_ecosystem.md
+TODO | README.md (master index)
