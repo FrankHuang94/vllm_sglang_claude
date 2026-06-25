@@ -14,7 +14,7 @@ DONE | 06_vllm_model_support_and_quantization.md | 4034 words
 DONE | 07_vllm_serving_and_apis.md | 4000 words
 DONE | 08_sglang_radix_attention.md (PRIMARY) | 12000 words
 DONE | 09_sglang_architecture_and_internals.md (PRIMARY) | 12003 words
-TODO | 10_attention_kernels_and_hardware.md (PRIMARY)
+DONE | 10_attention_kernels_and_hardware.md (PRIMARY) | 11997 words
 TODO | 11_performance_benchmarking_and_tuning.md (PRIMARY)
 TODO | 12_speculative_decoding.md
 TODO | 13_long_context_and_memory_optimization.md
