@@ -21,7 +21,7 @@ DONE | 13_long_context_and_memory_optimization.md | 4001 words
 DONE | 14_multimodal_and_embedding_inference.md | 4000 words
 DONE | 15_advanced_features_and_research.md (PRIMARY) | 11997 words
 DONE | 16_hardware_backends_and_deployment.md | 4007 words
-TODO | 17_model_serving_frameworks_comparison.md
+DONE | 17_model_serving_frameworks_comparison.md | 4002 words
 TODO | 18_lora_and_finetuned_model_serving.md
 TODO | 19_production_operations_and_reliability.md
 TODO | 20_business_market_and_ecosystem.md
